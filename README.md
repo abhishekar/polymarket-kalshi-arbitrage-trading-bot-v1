@@ -5,8 +5,7 @@
 
   <p>
     <a href="https://dexorynlabs.com">dexorynlabs.com</a> • 
-    <a href="https://twitter.com/dexorynlabs">@dexorynlabs</a> • 
-    hello@dexorynlabs.com
+    <a href="https://x.com/dexoryn">@dexorynlabs</a>
   </p>
 </div>
 
@@ -24,10 +23,8 @@
 - [provably-fair-engine](https://github.com/dexorynlabs/provably-fair-engine) – Chainlink VRF + on-chain verification (Solana & EVM)
 - [base-sniper-bot-template](https://github.com/dexorynlabs/base-sniper-bot-template) – Fastest Base chain sniper 2025
 
-## Built & maintained by
-[@dexoryn](https://github.com/dexoryn) – Full-stack Web3 developer (30k+ stars combined)
 
 **Looking for a reliable crypto casino or trading bot marketplace development in 2025?**  
-→ DM [@dexorynlabs on X](https://twitter.com/dexorynlabs) or email hello@dexorynlabs.com
+→ DM [@dexorynlabs on X](https://x.com/dexoryn) or  [https://t.com/@dexoryn_12]
 
 We deliver audited, scalable, revenue-ready products — fast.
