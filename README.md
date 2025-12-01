@@ -25,6 +25,6 @@
 
 
 **Looking for a reliable crypto casino or trading bot marketplace development in 2025?**  
-→ DM [@dexorynlabs on X](https://x.com/dexoryn) or  [https://t.com/@dexoryn_12]
+→ DM [@dexorynlabs on X](https://x.com/dexoryn) or  [@dexoryn Labs on Telegram](https://t.me/@dexoryn_12)
 
 We deliver audited, scalable, revenue-ready products — fast.
