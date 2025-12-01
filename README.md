@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.imgur.com/5bLfK2m.png" width="160" alt="Dexoryn Labs Logo" />
+ 
   <h1>Dexoryn Labs</h1>
   <p><strong>Crypto Casino Development • Trading Bot Marketplace Development • Provably Fair iGaming Studio</strong></p>
 
