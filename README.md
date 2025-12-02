@@ -1,11 +1,10 @@
 <div align="center">
  
-  <h1>DexorynLabs ⚡️/h1>
+  <h1>DexorynLabs ⚡️</h1>
   <p><strong>On-chain provable casinos + Polymarket sniper bots + autonomous trading agents</strong></p>
 
   <p>
-    <a href="https://dexorynlabs.com">dexorynlabs.com</a> • 
-    <a href="https://x.com/dexoryn">@dexorynlabs</a>
+    <a href="https://dexorynlabs.com">dexorynlabs.com</a> •  <a href="https://x.com/dexoryn">@dexorynlabs</a>
   </p>
 </div>
 
