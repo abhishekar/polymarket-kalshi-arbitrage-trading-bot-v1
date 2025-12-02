@@ -1,7 +1,7 @@
 <div align="center">
  
-  <h1>Dexoryn Labs</h1>
-  <p><strong>Crypto Casino Development • Trading Bot Marketplace Development • Provably Fair iGaming Studio</strong></p>
+  <h1>DexorynLabs ⚡️/h1>
+  <p><strong>On-chain provable casinos + Polymarket sniper bots + autonomous trading agents</strong></p>
 
   <p>
     <a href="https://dexorynlabs.com">dexorynlabs.com</a> • 
@@ -23,8 +23,12 @@
 - [provably-fair-engine](https://github.com/dexorynlabs/provably-fair-engine) – Chainlink VRF + on-chain verification (Solana & EVM)
 - [base-sniper-bot-template](https://github.com/dexorynlabs/base-sniper-bot-template) – Fastest Base chain sniper 2025
 
+## Currently shipping money printers:
+→ Polymarket volume & resolution snipers (sub-second)
+→ ZK + VRF provable roulette / dice / coinflip
+→ Cross-chain MEV-protected arbitrage bots
 
 **Looking for a reliable crypto casino or trading bot marketplace development in 2025?**  
-→ DM [@dexorynlabs on X](https://x.com/dexoryn) or  [@dexoryn Labs on Telegram](https://t.me/@dexoryn_12)
+→ DM [@dexorynlabs on X](https://x.com/dexoryn) or  [on Telegram](https://t.me/@dexoryn_12)
 
 We deliver audited, scalable, revenue-ready products — fast.
