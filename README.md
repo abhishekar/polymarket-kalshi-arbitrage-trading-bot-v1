@@ -4,7 +4,7 @@
   <p><strong>On-chain provable casinos + Polymarket sniper bots + autonomous trading agents</strong></p>
 
   <p>
-    <a href="https://dexorynlabs.com">dexorynlabs.com</a> •  <a href="https://x.com/dexoryn">@dexorynlabs</a>
+    <a href="https://dexorynlabs.xyz">dexorynlabs.com</a> •  <a href="https://t.me/dexoryn_12">@dexorynlabs</a>
   </p>
 </div>
 
