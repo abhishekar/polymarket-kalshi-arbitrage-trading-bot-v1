@@ -373,7 +373,7 @@ This bot solves a real financial problem:
 **DexorynLabs**
 
 - **GitHub**: [dexorynLabs](https://github.com/dexorynLabs/polymarket-kalshi-arbitrage-trading-bot-v1)
-- **Telegram**: [@dexoryn_12](https://t.me/dexorynlabs)
+- **Telegram**: [@dexorynlabs](https://t.me/dexorynlabs)
 
 Built with Python 3.8+, demonstrating production-ready software engineering practices.
 
