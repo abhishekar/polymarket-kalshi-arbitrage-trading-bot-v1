@@ -6,7 +6,7 @@
 
 A production-ready Python bot that identifies and executes arbitrage opportunities in Kalshi prediction markets. The bot analyzes market inefficiencies where contract probabilities don't sum to 100%, calculates net profit after fees, and can automatically execute trades when profitable opportunities are detected.
 
-**Repository**: [polymarket-kalshi-arbitrage-trading-bot-v1](https://github.com/dexorynLabs/polymarket-kalshi-arbitrage-trading-bot-v1)
+**Repository**: [polymarket-kalshi-arbitrage-trading-bot-v1](https://github.com/apemoonspin/polymarket-kalshi-arbitrage-trading-bot-v1)
 
 ## Overview
 
@@ -372,8 +372,8 @@ This bot solves a real financial problem:
 
 **DexorynLabs**
 
-- **GitHub**: [dexorynLabs](https://github.com/apemoonspin/polymarket-kalshi-arbitrage-trading-bot-v1)
-- **Telegram**: [@dexorynlabs](https://t.me/ApeMoonSpin)
+- **GitHub**: [apemoonspin](https://github.com/apemoonspin/polymarket-kalshi-arbitrage-trading-bot-v1)
+- **Telegram**: [@apemoonspin](https://t.me/ApeMoonSpin)
 
 Built with Python 3.8+, demonstrating production-ready software engineering practices.
 
