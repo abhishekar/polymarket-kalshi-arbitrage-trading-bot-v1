@@ -205,12 +205,25 @@ class KalshiArbitrageBot:
         if not markets:
             return [], [], 0
         
+        # #region agent log
+        import json, os
+        os.makedirs('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor', exist_ok=True)
+        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"A,E","location":"bot.py:206","message":"Filtered markets data","data":{"count":len(markets),"markets":[{"ticker":m.get("ticker"),"market_type":m.get("market_type"),"yes_bid":m.get("yes_bid"),"yes_ask":m.get("yes_ask"),"no_bid":m.get("no_bid"),"no_ask":m.get("no_ask")} for m in markets]},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+        # #endregion
+        
         # Scan for arbitrage opportunities
         arbitrage_opps = self.arbitrage_analyzer.find_opportunities(markets, client=self.client)
+        # #region agent log
+        import json
+        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"B","location":"bot.py:215","message":"Arbitrage opps before profit filter","data":{"count":len(arbitrage_opps),"min_profit_per_day":self.min_profit_per_day,"opps":[{"ticker":o.market_ticker,"profit_per_day":o.profit_per_day,"net_profit":o.net_profit} for o in arbitrage_opps]},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+        # #endregion
         arbitrage_opps = [
             opp for opp in arbitrage_opps 
             if opp.profit_per_day >= self.min_profit_per_day
         ]
+        # #region agent log
+        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"B","location":"bot.py:220","message":"Arbitrage opps after profit filter","data":{"count":len(arbitrage_opps)},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+        # #endregion
         
         # Scan for immediate trade opportunities
         original_auto_execute = self.trade_executor.auto_execute
@@ -218,6 +231,10 @@ class KalshiArbitrageBot:
         trade_opps = self.trade_executor.scan_and_execute(markets, limit=limit)
         self.trade_executor.auto_execute = original_auto_execute
         trade_opps.sort(key=lambda x: x.net_profit, reverse=True)
+        # #region agent log
+        import json
+        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"D","location":"bot.py:225","message":"Trade opps found","data":{"count":len(trade_opps)},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+        # #endregion
         
         # Execute trades if requested
         executed_count = 0

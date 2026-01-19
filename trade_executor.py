@@ -85,6 +85,11 @@ class TradeExecutor:
         no_bid = market_data.get("no_bid")    # Best price to sell NO
         no_ask = market_data.get("no_ask")    # Best price to buy NO
         
+        # #region agent log
+        import json
+        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"D","location":"trade_executor.py:88","message":"Checking spread","data":{"ticker":market_ticker,"yes_bid":yes_bid,"yes_ask":yes_ask,"no_bid":no_bid,"no_ask":no_ask,"yes_spread":(yes_bid-yes_ask) if yes_bid and yes_ask else None,"no_spread":(no_bid-no_ask) if no_bid and no_ask else None,"min_profit_cents":self.min_profit_cents},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+        # #endregion
+        
         # Check YES side: if ask < bid, we can buy at ask and sell at bid
         if yes_ask is not None and yes_bid is not None:
             spread = yes_bid - yes_ask

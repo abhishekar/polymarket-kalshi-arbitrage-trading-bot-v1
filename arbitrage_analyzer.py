@@ -95,6 +95,11 @@ class ArbitrageAnalyzer:
             no_bid = market_data.get("no_bid")
             no_ask = market_data.get("no_ask")
             
+            # #region agent log
+            import json
+            with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"A,E","location":"arbitrage_analyzer.py:100","message":"Analyzing market","data":{"ticker":market_ticker,"market_type":market_type,"yes_bid":yes_bid,"yes_ask":yes_ask,"no_bid":no_bid,"no_ask":no_ask},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+            # #endregion
+            
             total_prob = 0.0
             contract_prices = []
             
@@ -292,6 +297,11 @@ class ArbitrageAnalyzer:
                 [{'price': t['price'], 'quantity': t['quantity']} for t in trades],
                 all_maker=True
             )
+            
+            # #region agent log
+            import json
+            with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"C","location":"arbitrage_analyzer.py:295","message":"Arbitrage profit calc","data":{"ticker":market_ticker,"total_prob":total_prob,"deviation":deviation,"gross_profit":gross_profit,"net_profit":net_profit},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
+            # #endregion
             
             # Only return opportunities with positive net profit (after fees)
             # This dynamically calculates the minimum based on actual fees

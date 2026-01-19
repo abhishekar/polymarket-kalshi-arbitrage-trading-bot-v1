@@ -155,6 +155,66 @@ class KalshiClient:
             print(f"Error fetching markets: {e}")
             return []
     
+    def get_events_with_markets(self, limit: int = 100, status: str = "open") -> List[Dict]:
+        """
+        Fetch events with nested markets from Kalshi.
+        
+        This returns the actual prediction markets (politics, economics, etc.)
+        rather than just sports parlays from the /markets endpoint.
+        
+        Args:
+            limit: Maximum number of markets to return (will paginate through events)
+            status: Event status filter (e.g., 'open', 'closed')
+        
+        Returns:
+            List of market dictionaries extracted from events
+        """
+        all_markets = []
+        cursor = None
+        page_size = min(200, limit)  # API max is around 200
+        
+        try:
+            while len(all_markets) < limit:
+                params = {
+                    "limit": page_size,
+                    "status": status,
+                    "with_nested_markets": "true"
+                }
+                if cursor:
+                    params["cursor"] = cursor
+                
+                response = self._make_request("GET", "/events", params=params)
+                events = response.get("events", [])
+                
+                if not events:
+                    break  # No more events
+                
+                # Extract all markets from events
+                for event in events:
+                    event_markets = event.get("markets", [])
+                    # Add event metadata to each market
+                    for market in event_markets:
+                        market["event_ticker"] = event.get("event_ticker", "")
+                        market["event_title"] = event.get("title", "")
+                        market["category"] = event.get("category", "")
+                        all_markets.append(market)
+                        
+                        if len(all_markets) >= limit:
+                            break
+                    
+                    if len(all_markets) >= limit:
+                        break
+                
+                # Check for pagination cursor
+                cursor = response.get("cursor")
+                if not cursor:
+                    break  # No more pages
+            
+            return all_markets[:limit]
+        except Exception as e:
+            print(f"Error fetching events with markets: {e}")
+            return all_markets  # Return what we got so far
+    
     def get_market(self, market_ticker: str) -> Optional[Dict]:
         """
         Get detailed information about a specific market.
