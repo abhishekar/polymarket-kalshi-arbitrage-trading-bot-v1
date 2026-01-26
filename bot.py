@@ -22,6 +22,9 @@ from trade_executor import TradeExecutor, TradeOpportunity
 
 load_dotenv()
 
+# Load default limit from environment
+DEFAULT_LIMIT = int(os.getenv("DEFAULT_LIMIT", "1000"))
+
 
 class KalshiArbitrageBot:
     """
@@ -90,7 +93,7 @@ class KalshiArbitrageBot:
         
         return filtered
     
-    def scan_arbitrage_opportunities(self, limit: int = 100) -> List[ArbitrageOpportunity]:
+    def scan_arbitrage_opportunities(self, limit: int = 100, source: str = "events") -> List[ArbitrageOpportunity]:
         """
         Scan markets for arbitrage opportunities.
         
@@ -99,14 +102,19 @@ class KalshiArbitrageBot:
         
         Args:
             limit: Maximum number of markets to scan
+            source: Data source - 'events' for prediction markets, 'markets' for sports parlays
             
         Returns:
             List of arbitrage opportunities sorted by profit per day
         """
-        print(f"[{datetime.now()}] Scanning {limit} markets for arbitrage opportunities...")
+        source_desc = "prediction markets (events)" if source == "events" else "sports parlays (markets)"
+        print(f"[{datetime.now()}] Scanning {limit} {source_desc} for arbitrage opportunities...")
         
-        # Fetch active markets
-        markets = self.client.get_markets(limit=limit, status="open")
+        # Fetch active markets from appropriate source
+        if source == "events":
+            markets = self.client.get_events_with_markets(limit=limit, status="open")
+        else:
+            markets = self.client.get_markets(limit=limit, status="open")
         if not markets:
             print("No markets found or API error.")
             return []
@@ -131,7 +139,7 @@ class KalshiArbitrageBot:
         
         return filtered
     
-    def scan_immediate_trades(self, limit: int = 100, auto_execute: bool = False) -> List[TradeOpportunity]:
+    def scan_immediate_trades(self, limit: int = 100, auto_execute: bool = False, source: str = "events") -> List[TradeOpportunity]:
         """
         Scan markets for immediate trade opportunities.
         
@@ -141,14 +149,19 @@ class KalshiArbitrageBot:
         Args:
             limit: Maximum number of markets to scan
             auto_execute: If True, automatically execute profitable trades
+            source: Data source - 'events' for prediction markets, 'markets' for sports parlays
             
         Returns:
             List of trade opportunities sorted by net profit
         """
-        print(f"[{datetime.now()}] Scanning {limit} markets for immediate trade opportunities...")
+        source_desc = "prediction markets (events)" if source == "events" else "sports parlays (markets)"
+        print(f"[{datetime.now()}] Scanning {limit} {source_desc} for immediate trade opportunities...")
         
-        # Fetch active markets
-        markets = self.client.get_markets(limit=limit, status="open")
+        # Fetch active markets from appropriate source
+        if source == "events":
+            markets = self.client.get_events_with_markets(limit=limit, status="open")
+        else:
+            markets = self.client.get_markets(limit=limit, status="open")
         if not markets:
             print("No markets found or API error.")
             return []
@@ -177,21 +190,26 @@ class KalshiArbitrageBot:
         
         return opportunities
     
-    def scan_all_opportunities(self, limit: int = 100, auto_execute: bool = False):
+    def scan_all_opportunities(self, limit: int = 100, auto_execute: bool = False, source: str = "events"):
         """
         Scan for both arbitrage and immediate trade opportunities.
         
         Args:
             limit: Maximum number of markets to scan
             auto_execute: If True, automatically execute profitable trades
+            source: Data source - 'events' for prediction markets, 'markets' for sports parlays
             
         Returns:
             Tuple of (arbitrage_opportunities, trade_opportunities, executed_count)
         """
-        print(f"[{datetime.now()}] Scanning {limit} markets for all opportunities...")
+        source_desc = "prediction markets (events)" if source == "events" else "sports parlays (markets)"
+        print(f"[{datetime.now()}] Scanning {limit} {source_desc} for all opportunities...")
         
-        # Fetch markets once
-        markets = self.client.get_markets(limit=limit, status="open")
+        # Fetch markets once from appropriate source
+        if source == "events":
+            markets = self.client.get_events_with_markets(limit=limit, status="open")
+        else:
+            markets = self.client.get_markets(limit=limit, status="open")
         if not markets:
             print("No markets found or API error.")
             return [], [], 0
@@ -205,25 +223,12 @@ class KalshiArbitrageBot:
         if not markets:
             return [], [], 0
         
-        # #region agent log
-        import json, os
-        os.makedirs('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor', exist_ok=True)
-        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"A,E","location":"bot.py:206","message":"Filtered markets data","data":{"count":len(markets),"markets":[{"ticker":m.get("ticker"),"market_type":m.get("market_type"),"yes_bid":m.get("yes_bid"),"yes_ask":m.get("yes_ask"),"no_bid":m.get("no_bid"),"no_ask":m.get("no_ask")} for m in markets]},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
-        # #endregion
-        
         # Scan for arbitrage opportunities
         arbitrage_opps = self.arbitrage_analyzer.find_opportunities(markets, client=self.client)
-        # #region agent log
-        import json
-        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"B","location":"bot.py:215","message":"Arbitrage opps before profit filter","data":{"count":len(arbitrage_opps),"min_profit_per_day":self.min_profit_per_day,"opps":[{"ticker":o.market_ticker,"profit_per_day":o.profit_per_day,"net_profit":o.net_profit} for o in arbitrage_opps]},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
-        # #endregion
         arbitrage_opps = [
             opp for opp in arbitrage_opps 
             if opp.profit_per_day >= self.min_profit_per_day
         ]
-        # #region agent log
-        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"B","location":"bot.py:220","message":"Arbitrage opps after profit filter","data":{"count":len(arbitrage_opps)},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
-        # #endregion
         
         # Scan for immediate trade opportunities
         original_auto_execute = self.trade_executor.auto_execute
@@ -231,10 +236,6 @@ class KalshiArbitrageBot:
         trade_opps = self.trade_executor.scan_and_execute(markets, limit=limit)
         self.trade_executor.auto_execute = original_auto_execute
         trade_opps.sort(key=lambda x: x.net_profit, reverse=True)
-        # #region agent log
-        import json
-        with open('/Users/nandu/Documents/GitHub/polymarket-kalshi-arbitrage-trading-bot-v1/.cursor/debug.log', 'a') as f: f.write(json.dumps({"hypothesisId":"D","location":"bot.py:225","message":"Trade opps found","data":{"count":len(trade_opps)},"timestamp":__import__('time').time(),"sessionId":"debug-session"})+'\n')
-        # #endregion
         
         # Execute trades if requested
         executed_count = 0
@@ -286,7 +287,7 @@ class KalshiArbitrageBot:
         print(f"  Profit per Contract: ${opp.net_profit / opp.quantity:.4f}")
         print(f"{'='*60}\n")
     
-    def run_scan(self, limit: int = 100, display_all: bool = False, auto_execute: bool = False):
+    def run_scan(self, limit: int = 100, display_all: bool = False, auto_execute: bool = False, source: str = "events"):
         """
         Run a single scan and display results.
         
@@ -296,9 +297,10 @@ class KalshiArbitrageBot:
             limit: Maximum number of markets to scan
             display_all: If True, display all opportunities; if False, only top 10
             auto_execute: If True, automatically execute profitable trades
+            source: Data source - 'events' for prediction markets, 'markets' for sports parlays
         """
         arbitrage_opps, trade_opps, executed_count = self.scan_all_opportunities(
-            limit=limit, auto_execute=auto_execute
+            limit=limit, auto_execute=auto_execute, source=source
         )
         
         if not arbitrage_opps and not trade_opps:
@@ -353,7 +355,7 @@ class KalshiArbitrageBot:
             print(f"\n[AUTO-EXECUTE] Executed {executed_count} trades automatically.")
     
     def run_continuous(self, scan_interval: int = 300, limit: int = 100, 
-                      auto_execute: bool = False, max_scans: int = None):
+                      auto_execute: bool = False, max_scans: int = None, source: str = "events"):
         """
         Run continuous scanning mode.
         
@@ -364,8 +366,10 @@ class KalshiArbitrageBot:
             limit: Maximum number of markets to scan per iteration
             auto_execute: If True, automatically execute profitable trades
             max_scans: Maximum number of scans (None = infinite)
+            source: Data source - 'events' for prediction markets, 'markets' for sports parlays
         """
-        print(f"Starting continuous scanning (every {scan_interval} seconds)...")
+        source_desc = "prediction markets (events)" if source == "events" else "sports parlays (markets)"
+        print(f"Starting continuous scanning of {source_desc} (every {scan_interval} seconds)...")
         if auto_execute:
             print("⚠️  AUTO-EXECUTE ENABLED: Trades will be executed automatically!")
         if max_scans:
@@ -381,7 +385,7 @@ class KalshiArbitrageBot:
                     break
                 
                 arbitrage_opps, trade_opps, executed_count = self.scan_all_opportunities(
-                    limit=limit, auto_execute=auto_execute
+                    limit=limit, auto_execute=auto_execute, source=source
                 )
                 
                 total_opps = len(arbitrage_opps) + len(trade_opps)
@@ -420,8 +424,8 @@ def main():
     parser.add_argument(
         "--limit",
         type=int,
-        default=100,
-        help="Maximum number of markets to scan (default: 100)"
+        default=DEFAULT_LIMIT,
+        help=f"Maximum number of markets to scan (default: {DEFAULT_LIMIT}, env: DEFAULT_LIMIT)"
     )
     parser.add_argument(
         "--all",
@@ -458,6 +462,12 @@ def main():
         default=None,
         help="Maximum number of scans in continuous mode (default: infinite)"
     )
+    parser.add_argument(
+        "--source",
+        choices=["events", "markets"],
+        default="events",
+        help="Data source: 'events' for prediction markets (default), 'markets' for sports parlays"
+    )
     
     args = parser.parse_args()
     
@@ -474,23 +484,24 @@ def main():
             scan_interval=args.interval,
             limit=args.limit,
             auto_execute=args.auto_execute,
-            max_scans=args.max_scans
+            max_scans=args.max_scans,
+            source=args.source
         )
     elif args.trades_only:
-        opportunities = bot.scan_immediate_trades(limit=args.limit, auto_execute=args.auto_execute)
+        opportunities = bot.scan_immediate_trades(limit=args.limit, auto_execute=args.auto_execute, source=args.source)
         if opportunities:
             display_count = len(opportunities) if args.all else min(10, len(opportunities))
             for i, opp in enumerate(opportunities[:display_count], 1):
                 bot.display_trade_opportunity(opp, index=i)
     elif args.arbitrage_only:
-        opportunities = bot.scan_arbitrage_opportunities(limit=args.limit)
+        opportunities = bot.scan_arbitrage_opportunities(limit=args.limit, source=args.source)
         if opportunities:
             display_count = len(opportunities) if args.all else min(10, len(opportunities))
             for i, opp in enumerate(opportunities[:display_count], 1):
                 bot.display_arbitrage_opportunity(opp, index=i)
     else:
         # Default: scan both types
-        bot.run_scan(limit=args.limit, display_all=args.all, auto_execute=args.auto_execute)
+        bot.run_scan(limit=args.limit, display_all=args.all, auto_execute=args.auto_execute, source=args.source)
 
 
 if __name__ == "__main__":
