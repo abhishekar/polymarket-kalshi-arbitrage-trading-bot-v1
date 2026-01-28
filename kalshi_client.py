@@ -135,7 +135,7 @@ class KalshiClient:
     
     def get_markets(self, limit: int = 100, status: str = "open") -> List[Dict]:
         """
-        Fetch active markets from Kalshi.
+        Fetch active markets from Kalshi with pagination support.
         
         Args:
             limit: Maximum number of markets to return
@@ -144,16 +144,35 @@ class KalshiClient:
         Returns:
             List of market dictionaries
         """
+        all_markets = []
+        cursor = None
+        page_size = min(1000, limit)  # API max is 1000 for /markets endpoint
+        
         try:
-            response = self._make_request(
-                "GET",
-                "/markets",
-                params={"limit": limit, "status": status}
-            )
-            return response.get("markets", [])
+            while len(all_markets) < limit:
+                params = {
+                    "limit": page_size,
+                    "status": status
+                }
+                if cursor:
+                    params["cursor"] = cursor
+                
+                response = self._make_request("GET", "/markets", params=params)
+                markets = response.get("markets", [])
+                
+                if not markets:
+                    break
+                
+                all_markets.extend(markets)
+                
+                cursor = response.get("cursor")
+                if not cursor:
+                    break
+            
+            return all_markets[:limit]
         except Exception as e:
             print(f"Error fetching markets: {e}")
-            return []
+            return all_markets
     
     def get_events_with_markets(self, limit: int = 100, status: str = "open") -> List[Dict]:
         """

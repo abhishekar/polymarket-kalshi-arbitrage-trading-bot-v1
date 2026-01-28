@@ -128,8 +128,8 @@ class KalshiArbitrageBot:
         if not markets:
             return []
         
-        # Find arbitrage opportunities
-        opportunities = self.arbitrage_analyzer.find_opportunities(markets, client=self.client)
+        # Find arbitrage opportunities (using market data prices, not individual orderbook fetches)
+        opportunities = self.arbitrage_analyzer.find_opportunities(markets)
         
         # Filter by minimum profit per day
         filtered = [
@@ -223,8 +223,8 @@ class KalshiArbitrageBot:
         if not markets:
             return [], [], 0
         
-        # Scan for arbitrage opportunities
-        arbitrage_opps = self.arbitrage_analyzer.find_opportunities(markets, client=self.client)
+        # Scan for arbitrage opportunities (using market data prices, not individual orderbook fetches)
+        arbitrage_opps = self.arbitrage_analyzer.find_opportunities(markets)
         arbitrage_opps = [
             opp for opp in arbitrage_opps 
             if opp.profit_per_day >= self.min_profit_per_day

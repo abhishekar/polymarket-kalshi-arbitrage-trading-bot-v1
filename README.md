@@ -42,9 +42,11 @@ The codebase follows a modular architecture with clear separation of concerns:
 
 ### Core Modules
 
-- **`bot.py`** - Main orchestration layer that coordinates scanning and execution
+- **`bot.py`** - Arbitrage bot: finds arbitrage and immediate trade opportunities
+- **`bot-v2.py`** - High odds scanner: finds markets with specific YES/NO probability ranges
 - **`kalshi_client.py`** - API abstraction layer with rate limiting, retry logic, and error handling
 - **`arbitrage_analyzer.py`** - Business logic for detecting probability-based arbitrage
+- **`high_odds_analyzer.py`** - Filtering logic for probability-based market selection
 - **`trade_executor.py`** - Orderbook analysis and trade execution engine
 - **`fee_calculator.py`** - Fee calculation module with tiered fee structure support
 
@@ -74,6 +76,61 @@ cp .env.example .env
 
 # Run the bot
 python bot.py
+```
+
+## Quick Reference Commands
+
+All commands grouped for easy copy-paste.
+
+### bot.py - Arbitrage Bot
+
+```bash
+# Basic scan (prediction markets, default)
+python3 bot.py
+
+# Scan sports parlays instead
+python3 bot.py --source markets
+
+# Scan more markets, show all results
+python3 bot.py --limit 5000 --all
+
+# Continuous monitoring (every 60 seconds)
+python3 bot.py --continuous --interval 60
+
+# Only arbitrage or only trades
+python3 bot.py --arbitrage-only
+python3 bot.py --trades-only
+
+# Auto-execute (USE WITH CAUTION)
+python3 bot.py --auto-execute
+
+# Filter by minimum liquidity ($500)
+python3 bot.py --min-liquidity 50000
+```
+
+### bot-v2.py - High Odds Scanner
+
+```bash
+# Find high YES probability markets (default: 85-92%)
+python3 bot-v2.py
+
+# Find low YES probability markets (high NO odds)
+python3 bot-v2.py --min-odds 0.05 --max-odds 0.15
+
+# Markets expiring within 24 hours
+python3 bot-v2.py --max-days 1
+
+# High liquidity markets only ($10,000+)
+python3 bot-v2.py --min-liquidity 1000000
+
+# Output as JSON
+python3 bot-v2.py --output json
+
+# Combined filters (85-95% YES, 7 days, $5000+ liquidity)
+python3 bot-v2.py --min-odds 0.85 --max-odds 0.95 --max-days 7 --min-liquidity 500000
+
+# Debug mode to see raw market data
+python3 bot-v2.py --debug
 ```
 
 ## Setup
@@ -118,19 +175,58 @@ MAX_POSITION_SIZE=1000
 ### Optional Configuration
 
 You can adjust these parameters in `.env`:
-- `MIN_PROFIT_PER_DAY`: Minimum profit per day threshold for arbitrage opportunities (default: $0.10)
-- `MAX_POSITION_SIZE`: Maximum position size for trades (default: 1000 contracts)
-- `MIN_PROFIT_CENTS`: Minimum profit in cents per contract for immediate trades (default: 2)
+
+#### Common Settings (both scripts)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEFAULT_LIMIT` | `30000` | Default number of markets to fetch |
+| `MIN_LIQUIDITY` | `10000` | Minimum liquidity in cents (bot.py: $100, bot-v2.py: $10,000) |
+
+#### bot.py Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MIN_PROFIT_PER_DAY` | `0.1` | Minimum profit per day threshold for arbitrage ($0.10) |
+| `MAX_POSITION_SIZE` | `1000` | Maximum position size for trades (contracts) |
+| `MIN_PROFIT_CENTS` | `2` | Minimum profit in cents per contract for immediate trades |
+
+#### bot-v2.py Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MIN_ODDS` | `0.85` | Minimum YES probability (85%) |
+| `MAX_ODDS` | `0.92` | Maximum YES probability (92%) |
+| `MAX_DAYS` | `3` | Maximum days until market closes |
 
 **Note**: The bot automatically calculates the minimum profitable deviation based on actual trading fees. Any opportunity with positive net profit (after fees) will be considered, ensuring you don't miss profitable opportunities even if they're very small.
 
 ## Usage
 
-### Single Scan
+This project includes two main scripts:
+- **bot.py** - Arbitrage Bot for finding trading opportunities
+- **bot-v2.py** - High Odds Scanner for finding markets by probability range
+
+---
+
+### bot.py - Arbitrage Bot
+
+Scans markets for arbitrage and immediate trade opportunities.
+
+#### Data Sources
+
+The bot can fetch from two different Kalshi API endpoints:
+
+| Source | Flag | Description |
+|--------|------|-------------|
+| Events | `--source events` (default) | Prediction markets (politics, economics, etc.) with pagination support |
+| Markets | `--source markets` | Sports parlays |
+
+#### Single Scan
 
 Run a one-time scan (automatically scans both arbitrage and immediate trades):
 ```bash
-python bot.py
+python3 bot.py
 ```
 
 The bot will automatically:
@@ -141,31 +237,31 @@ The bot will automatically:
 
 Display all opportunities (not just top 10):
 ```bash
-python bot.py --all
+python3 bot.py --all
 ```
 
 Scan more markets:
 ```bash
-python bot.py --limit 500
+python3 bot.py --limit 5000
 ```
 
-### Continuous Monitoring
+#### Continuous Monitoring
 
 Run continuous scanning (checks every 5 minutes by default):
 ```bash
-python bot.py --continuous
+python3 bot.py --continuous
 ```
 
 Custom scan interval (in seconds):
 ```bash
-python bot.py --continuous --interval 60
+python3 bot.py --continuous --interval 60
 ```
 
-### Automatic Trade Execution
+#### Automatic Trade Execution
 
 **⚠️ WARNING**: Automatically execute trades (USE WITH CAUTION):
 ```bash
-python bot.py --auto-execute
+python3 bot.py --auto-execute
 ```
 
 With `--auto-execute`, the bot will:
@@ -173,34 +269,83 @@ With `--auto-execute`, the bot will:
 - Prioritize immediate trades over arbitrage (no waiting required)
 - Execute trades only when net profit is positive after fees
 
-### Legacy Options (for specific scanning)
+#### Specific Scanning Modes
 
 If you want to scan only one type of opportunity:
 ```bash
 # Only immediate trades
-python bot.py --trades-only
+python3 bot.py --trades-only
 
 # Only arbitrage opportunities
-python bot.py --arbitrage-only
+python3 bot.py --arbitrage-only
 ```
 
-**Note**: By default, the bot scans both types automatically and compares them.
+#### bot.py Command Line Options
 
-### Command Line Options
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--source` | `events` | Data source: `events` (prediction markets) or `markets` (sports parlays) |
+| `--limit` | `30000` (env: `DEFAULT_LIMIT`) | Maximum number of markets to scan |
+| `--continuous` | off | Run continuous scanning mode |
+| `--interval` | `300` | Scan interval in seconds for continuous mode |
+| `--all` | off | Display all opportunities (not just top 10) |
+| `--auto-execute` | off | Automatically execute profitable trades (USE WITH CAUTION) |
+| `--trades-only` | off | Scan ONLY for immediate trade opportunities |
+| `--arbitrage-only` | off | Scan ONLY for arbitrage opportunities |
+| `--min-liquidity` | `10000` | Minimum liquidity in cents ($100) |
+| `--max-scans` | infinite | Maximum number of scans in continuous mode |
 
+---
+
+### bot-v2.py - High Odds Scanner
+
+Finds markets with specific YES/NO probability ranges. Useful for finding high-confidence markets or markets with favorable NO odds.
+
+#### Use Cases
+
+- **High YES probability**: Find markets likely to resolve YES (e.g., 85-95%)
+- **High NO probability**: Find markets likely to resolve NO by searching low YES odds (e.g., 5-15%)
+- **Short-term markets**: Filter by expiration date to find markets closing soon
+- **Liquid markets**: Filter by liquidity to find actively traded markets
+
+#### Basic Usage
+
+```bash
+# Find high YES probability markets (default: 85-92%)
+python3 bot-v2.py
+
+# Find low YES probability markets (high NO odds)
+python3 bot-v2.py --min-odds 0.05 --max-odds 0.15
+
+# Markets expiring within 24 hours
+python3 bot-v2.py --max-days 1
+
+# Combined filters
+python3 bot-v2.py --min-odds 0.85 --max-odds 0.95 --max-days 7 --min-liquidity 500000
 ```
---continuous       Run continuous scanning mode
---interval N       Scan interval in seconds (default: 300)
---limit N          Maximum number of markets to scan (default: 100)
---all              Display all opportunities (not just top 10)
---auto-execute     Automatically execute profitable trades (USE WITH CAUTION)
---trades-only      Scan ONLY for immediate trade opportunities
---arbitrage-only   Scan ONLY for arbitrage opportunities
---min-liquidity N   Minimum liquidity in cents (default: 10000 = $100)
---max-scans N      Maximum number of scans in continuous mode
+
+#### Output Formats
+
+```bash
+# Table format (default) - human readable
+python3 bot-v2.py --output table
+
+# JSON format - for programmatic use
+python3 bot-v2.py --output json
 ```
 
-**Default Behavior**: The bot automatically scans both arbitrage and immediate trade opportunities, compares them, and shows recommendations.
+#### bot-v2.py Command Line Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--source` | `events` | Data source: `events` (prediction markets) or `markets` (sports parlays) |
+| `--limit` | `30000` (env: `DEFAULT_LIMIT`) | Maximum number of markets to fetch from API |
+| `--min-odds` | `0.85` (env: `MIN_ODDS`) | Minimum YES probability (0.0-1.0) |
+| `--max-odds` | `0.92` (env: `MAX_ODDS`) | Maximum YES probability (0.0-1.0) |
+| `--min-liquidity` | `1000000` (env: `MIN_LIQUIDITY`) | Minimum liquidity in cents ($10,000) |
+| `--max-days` | `3` (env: `MAX_DAYS`) | Maximum days until market closes |
+| `--output` | `table` | Output format: `table` or `json` |
+| `--debug` | off | Show debug information about market data |
 
 ## How It Works
 
