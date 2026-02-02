@@ -174,6 +174,23 @@ class KalshiClient:
             print(f"Error fetching markets: {e}")
             return all_markets
     
+    def get_market_by_ticker(self, ticker: str) -> Optional[Dict]:
+        """
+        Fetch a single market by its ticker.
+        
+        Args:
+            ticker: The market ticker (e.g., 'KXNBAPTS-26JAN28SASHOU-HOUKDURANT7-20')
+        
+        Returns:
+            Market dictionary if found, None otherwise
+        """
+        try:
+            response = self._make_request("GET", f"/markets/{ticker}")
+            return response.get("market")
+        except Exception as e:
+            # Market not found or other error
+            return None
+    
     def get_events_with_markets(self, limit: int = 100, status: str = "open") -> List[Dict]:
         """
         Fetch events with nested markets from Kalshi.

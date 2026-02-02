@@ -346,4 +346,136 @@ class ArbitrageAnalyzer:
         opportunities.sort(key=lambda x: x.profit_per_day, reverse=True)
         
         return opportunities
+    
+    def analyze_event(self, markets: List[Dict]) -> Optional[ArbitrageOpportunity]:
+        """
+        Analyze multiple markets from the same event for multi-way arbitrage.
+        
+        In a mutually exclusive event (e.g., "Who will win the election?"), 
+        the sum of all outcome probabilities should equal 100%. If they don't,
+        there is a multi-way arbitrage opportunity.
+        
+        Args:
+            markets: List of market dictionaries from the same event
+        
+        Returns:
+            ArbitrageOpportunity if found, None otherwise
+        """
+        if len(markets) < 2:
+            return None
+        
+        try:
+            # Use the first market's metadata for the opportunity
+            first_market = markets[0]
+            event_ticker = first_market.get("event_ticker", first_market.get("ticker", ""))
+            event_title = first_market.get("event_title", first_market.get("title", "Multi-way Event"))
+            
+            # Get expiration date
+            expiration_str = first_market.get("expiration_time") or first_market.get("expiration_date")
+            if not expiration_str:
+                return None
+            
+            expiration_date = date_parser.parse(expiration_str)
+            days_to_expiration = (expiration_date - datetime.now(expiration_date.tzinfo)).total_seconds() / 86400
+            
+            if days_to_expiration <= 0:
+                return None
+            
+            # Calculate total probability across all markets
+            # For multi-way events, we look at the "yes" probability of each outcome
+            total_prob = 0.0
+            contract_prices = []
+            
+            for market in markets:
+                yes_bid = market.get("yes_bid")
+                yes_ask = market.get("yes_ask")
+                
+                # Use mid-price for multi-way analysis
+                if yes_bid is not None and yes_ask is not None:
+                    mid_price = (yes_bid + yes_ask) / 2
+                    prob = mid_price / 100.0
+                    total_prob += prob
+                    
+                    contract_prices.append({
+                        'ticker': market.get('ticker', ''),
+                        'side': 'yes',
+                        'price': int(mid_price),
+                        'probability': prob,
+                        'yes_bid': yes_bid,
+                        'yes_ask': yes_ask
+                    })
+            
+            if not contract_prices:
+                return None
+            
+            # Check for arbitrage
+            deviation = abs(total_prob - 1.0) * 100
+            
+            # For multi-way arbitrage, we need a meaningful deviation
+            if deviation < 0.5:  # Less than 0.5% deviation
+                return None
+            
+            # Calculate trades
+            trades = []
+            gross_profit = 0.0
+            base_quantity = 100
+            
+            if total_prob > 1.0:
+                # Overpriced - sell all outcomes
+                for contract in contract_prices:
+                    quantity = int(base_quantity / len(contract_prices))
+                    if quantity > 0:
+                        trades.append({
+                            'ticker': contract['ticker'],
+                            'side': 'yes',
+                            'action': 'sell',
+                            'price': contract['yes_bid'],  # Sell at bid
+                            'quantity': quantity
+                        })
+                
+                gross_profit = (total_prob - 1.0) * base_quantity
+            
+            else:  # total_prob < 1.0
+                # Underpriced - buy all outcomes
+                for contract in contract_prices:
+                    quantity = int(base_quantity / len(contract_prices))
+                    if quantity > 0:
+                        trades.append({
+                            'ticker': contract['ticker'],
+                            'side': 'yes',
+                            'action': 'buy',
+                            'price': contract['yes_ask'],  # Buy at ask
+                            'quantity': quantity
+                        })
+                
+                gross_profit = (1.0 - total_prob) * base_quantity
+            
+            if not trades:
+                return None
+            
+            # Calculate net profit after fees
+            net_profit = FeeCalculator.calculate_net_profit(
+                gross_profit,
+                [{'price': t['price'], 'quantity': t['quantity']} for t in trades],
+                all_maker=True
+            )
+            
+            if net_profit <= 0:
+                return None
+            
+            return ArbitrageOpportunity(
+                market_ticker=event_ticker,
+                market_title=event_title,
+                total_probability=total_prob * 100,
+                deviation=deviation,
+                expiration_date=expiration_date,
+                trades=trades,
+                gross_profit=gross_profit,
+                net_profit=net_profit,
+                days_to_expiration=days_to_expiration
+            )
+        
+        except Exception as e:
+            print(f"Error analyzing event: {e}")
+            return None
 
